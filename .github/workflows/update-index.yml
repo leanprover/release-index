@@ -16,13 +16,20 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Install jq
+        uses: dcarbone/install-jq-action@v2.0.2
+        with:
+          force: true
       - name: Create index
         run: |
           set -euxo pipefail
           gh api --paginate repos/leanprover/lean4/releases > releases
           gh api --paginate repos/leanprover/lean4-nightly/releases > releases-nightly
           mkdir output
-          jq -s '{version: "1", stable: .[0] | map(select(.prerelease | not)), beta: .[0] | map(select(.prerelease)), nightly: .[1]}' releases releases-nightly > output/index.json
+          jq --compact-output --slurp '
+            def preprocess: map(pick(.name, .created_at, (.assets | .[] | .name, .browser_download_url)));
+            {version: "1", stable: .[0] | map(select(.prerelease | not)) | preprocess, beta: .[0] | map(select(.prerelease)) | preprocess, nightly: .[1] | preprocess}' \
+            releases releases-nightly > output/index.json
       - name: Create artifact
         uses: actions/upload-pages-artifact@v2
         with:
