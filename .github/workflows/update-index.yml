@@ -13,12 +13,14 @@ concurrency:
 jobs:
   create-index:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Create index
         run: |
           set -euxo pipefail
-          curl -H "Authorization: ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/leanprover/lean4/releases?per_page=100 > releases
-          curl -H "Authorization: ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/leanprover/lean4-nightly/releases?per_page=100 > releases-nightly
+          gh api --paginate repos/leanprover/lean4/releases > releases
+          gh api --paginate repos/leanprover/lean4-nightly/releases > releases-nightly
           mkdir output
           jq -s '{version: "1", stable: .[0] | map(select(.prerelease | not)), beta: .[0] | map(select(.prerelease)), nightly: .[1]}' releases releases-nightly > output/index.json
       - name: Create artifact
