@@ -26,10 +26,24 @@ jobs:
           gh api --paginate repos/leanprover/lean4/releases > releases
           gh api --paginate repos/leanprover/lean4-nightly/releases > releases-nightly
           mkdir output
+          # version 1, all in one file. still needed?
           jq --compact-output --slurp '
             def preprocess: map(pick(.name, .created_at, (.assets | .[] | .name, .browser_download_url)));
             {version: "1", stable: .[0] | map(select(.prerelease | not)) | preprocess, beta: .[0] | map(select(.prerelease)) | preprocess, nightly: .[1] | preprocess}' \
             releases releases-nightly > output/index.json
+          # version 2, one file per channel (for smaller stable channel)
+          jq --compact-output '
+            def preprocess: map(pick(.name, .created_at, (.assets | .[] | .name, .browser_download_url)));
+            {version: "2", releases: . | map(select(.prerelease | not)) | preprocess}' \
+            < releases > output/stable.json
+          jq --compact-output '
+            def preprocess: map(pick(.name, .created_at, (.assets | .[] | .name, .browser_download_url)));
+            {version: "2", releases: . | map(select(.prerelease)) | preprocess}' \
+            < releases > output/beta.json
+          jq --compact-output '
+            def preprocess: map(pick(.name, .created_at, (.assets | .[] | .name, .browser_download_url)));
+            {version: "2", releases: . | preprocess}' \
+            < releases-nightly > output/nightly.json
       - name: Create artifact
         uses: actions/upload-pages-artifact@v2
         with:
