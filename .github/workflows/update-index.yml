@@ -26,7 +26,7 @@ jobs:
           gh api --paginate repos/leanprover/lean4/releases > releases
           gh api --paginate repos/leanprover/lean4-nightly/releases > releases-nightly
           mkdir output
-          # version 1, all in one file. still needed?
+          # version 1, all in one file.
           jq --compact-output --slurp '
             def preprocess: map(pick(.name, .created_at, (.assets | .[] | .name, .browser_download_url)));
             {version: "1", stable: .[0] | map(select(.prerelease | not)) | preprocess, beta: .[0] | map(select(.prerelease)) | preprocess, nightly: .[1] | preprocess}' \
