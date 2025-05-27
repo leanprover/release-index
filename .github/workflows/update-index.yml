@@ -23,10 +23,7 @@ jobs:
       - name: Create index
         run: |
           set -euxo pipefail
-          # the sed changes the download URLs so that they go through our
-          # releases.lean-lang.org service
-          gh api --paginate repos/leanprover/lean4/releases |
-            sed -e 's,https://github.com/leanprover/lean4/releases/download/,https://releases.lean-lang.org/lean4/,g' > releases
+          gh api --paginate repos/leanprover/lean4/releases > releases
           gh api --paginate repos/leanprover/lean4-nightly/releases > releases-nightly
           mkdir output
           # version 1, all in one file.
